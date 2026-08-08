@@ -1,0 +1,53 @@
+name: CI/CD - Infraestrutura (Terraform)
+
+on:
+  push:
+    branches:
+      - main # Executa o Apply quando há um merge na main
+  pull_request:
+    branches:
+      - main # Executa apenas o Plan quando é aberto um PR
+
+jobs:
+  terraform:
+    name: 'Terraform Plan & Apply'
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Faz o checkout do código do repositório
+      - name: Checkout do código
+        uses: actions/checkout@v3
+
+      # 2. Configura as credenciais da AWS (Atenção ao Session Token do AWS Academy)
+      - name: Configurar Credenciais AWS
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1 # Altere se usar outra região no AWS Academy
+
+      # 3. Instala o Terraform na máquina do GitHub Actions
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0 # Pode ajustar para a versão que costuma usar
+
+      # 4. Inicializa o Terraform (faz download dos providers)
+      - name: Terraform Init
+        run: terraform init
+
+      # 5. Verifica se o código está bem formatado (boa prática)
+      - name: Terraform Format
+        run: terraform fmt -check
+        continue-on-error: true
+
+      # 6. Faz o planeamento e mostra o que será alterado (corre em PR e Push)
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -out=tfplan
+
+      # 7. Aplica a infraestrutura na nuvem (CORRE APENAS NA MAIN)
+      - name: Terraform Apply
+        if: github.event_name == 'push'
+        run: terraform apply -auto-approve tfplan

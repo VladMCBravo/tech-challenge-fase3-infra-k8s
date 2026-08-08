@@ -16,4 +16,11 @@ module "vpc" {
     Environment = "tech-challenge"
     Project     = "oficina-mecanica"
   }
+ 
+  # --- O QUE FOI ADICIONADO ---
+  # Isso vai colocar uma etiqueta "Tier = Private" nas subnets privadas
+  # para o Repo 3 conseguir achá-las depois.
+  private_subnet_tags = {
+    Tier = "Private"
+  }
 }
