@@ -4,7 +4,7 @@ data "aws_caller_identity" "current" {}
 resource "aws_eks_cluster" "oficina_cluster" {
   name     = "oficina-eks-cluster"
   role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/LabRole"
-  version  = "1.29" # <-- Downgrade para versão suportada pelo Academy
+  
 
   vpc_config {
     subnet_ids             = module.vpc.private_subnets
@@ -20,7 +20,7 @@ resource "aws_eks_node_group" "oficina_nodes" {
   subnet_ids      = module.vpc.private_subnets
 
   instance_types = ["t3.medium"]
-  ami_type       = "AL2_x86_64" # <-- Garantindo compatibilidade da imagem
+  ami_type       = "AL2_x86_64"
 
   scaling_config {
     desired_size = 1
