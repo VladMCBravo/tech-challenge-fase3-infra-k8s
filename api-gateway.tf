@@ -34,11 +34,11 @@ resource "aws_apigatewayv2_route" "auth_route" {
 
 # Dá permissão para o API Gateway invocar a Lambda
 resource "aws_lambda_permission" "api_gw" {
-  statement_id  = "AllowExecutionFromAPIGateway"
-  action        = "lambda:InvokeFunction"
-  function_name = data.aws_lambda_function.auth_lambda.function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.oficina_api.execution_arn}/*/*"
+  statement_id_prefix = "AllowExecutionFromAPI-" # <-- MUDANÇA AQUI
+  action              = "lambda:InvokeFunction"
+  function_name       = data.aws_lambda_function.auth_lambda.function_name
+  principal           = "apigateway.amazonaws.com"
+  source_arn          = "${aws_apigatewayv2_api.oficina_api.execution_arn}/*/*"
 }
 
 # 5. ROTA PRINCIPAL: Integração do API Gateway com o EKS (Proxy)

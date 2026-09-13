@@ -20,7 +20,6 @@ resource "aws_eks_node_group" "oficina_nodes" {
   subnet_ids      = module.vpc.private_subnets
 
   instance_types = ["t3.medium"]
-  ami_type       = "AL2_x86_64"
 
   scaling_config {
     desired_size = 1
