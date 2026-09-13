@@ -4,11 +4,13 @@
 variable "eks_lb_url" {
   description = "URL do Load Balancer gerado pelo Kubernetes"
   type        = string
-  default     = "http://example.com"
+  default     = "http://example.com" # <-- Alterado de localhost para passar na validação
 }
 
-# 2. (Opcional) Bloco da Lambda de Autenticação removido/comentado pois a Lambda foi resetada na AWS.
-# Se precisar reativar no futuro, descomente o data e as rotas abaixo junto com a Lambda.
+# 2. Busca a Lambda de Autenticação criada pelo Repo 1
+data "aws_lambda_function" "auth_lambda" {
+  function_name = "oficina-auth-stack-AuthFunction-zxFaZdpy5es7" 
+}
 
 # 3. Cria o API Gateway (HTTP API)
 resource "aws_apigatewayv2_api" "oficina_api" {
@@ -16,7 +18,30 @@ resource "aws_apigatewayv2_api" "oficina_api" {
   protocol_type = "HTTP"
 }
 
-# 4. ROTA PRINCIPAL: Integração do API Gateway com o EKS (Proxy)
+# 4. ROTA DE LOGIN: Integração do API Gateway com a Lambda
+resource "aws_apigatewayv2_integration" "lambda_integration" {
+  api_id                 = aws_apigatewayv2_api.oficina_api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = data.aws_lambda_function.auth_lambda.arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "auth_route" {
+  api_id    = aws_apigatewayv2_api.oficina_api.id
+  route_key = "POST /auth" # Quando chamarem POST /auth, vai para a Lambda
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+}
+
+# Dá permissão para o API Gateway invocar a Lambda
+resource "aws_lambda_permission" "api_gw" {
+  statement_id_prefix = "AllowExecutionFromAPI-" # <-- MUDANÇA AQUI
+  action              = "lambda:InvokeFunction"
+  function_name       = data.aws_lambda_function.auth_lambda.function_name
+  principal           = "apigateway.amazonaws.com"
+  source_arn          = "${aws_apigatewayv2_api.oficina_api.execution_arn}/*/*"
+}
+
+# 5. ROTA PRINCIPAL: Integração do API Gateway com o EKS (Proxy)
 resource "aws_apigatewayv2_integration" "eks_integration" {
   api_id             = aws_apigatewayv2_api.oficina_api.id
   integration_type   = "HTTP_PROXY"
@@ -26,18 +51,18 @@ resource "aws_apigatewayv2_integration" "eks_integration" {
 
 resource "aws_apigatewayv2_route" "eks_route" {
   api_id    = aws_apigatewayv2_api.oficina_api.id
-  route_key = "ANY /{proxy+}" # Manda todo o tráfego para o NestJS no EKS
+  route_key = "ANY /{proxy+}" # Manda todo o resto do tráfego para o NestJS
   target    = "integrations/${aws_apigatewayv2_integration.eks_integration.id}"
 }
 
-# 5. Publica o API Gateway (Stage padrão)
+# 6. Publica o API Gateway (Stage padrão)
 resource "aws_apigatewayv2_stage" "default_stage" {
   api_id      = aws_apigatewayv2_api.oficina_api.id
   name        = "$default"
   auto_deploy = true
 }
 
-# 6. Imprime a URL do API Gateway no final para você usar no Postman
+# 7. Imprime a URL do API Gateway no final para você usar no Swagger/Postman
 output "api_gateway_url" {
   value = aws_apigatewayv2_stage.default_stage.invoke_url
 }
