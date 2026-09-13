@@ -9,7 +9,7 @@ variable "eks_lb_url" {
 
 # 2. Busca a Lambda de Autenticação criada pelo Repo 1
 data "aws_lambda_function" "auth_lambda" {
-  function_name = "oficina-auth-stack-AuthFunction-tehjPDXSbk5y" 
+  function_name = "oficina-auth-stack-AuthFunction-kSokR43Q4FL5" 
 }
 
 # 3. Cria o API Gateway (HTTP API)
