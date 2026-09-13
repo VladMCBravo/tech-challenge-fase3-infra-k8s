@@ -9,8 +9,7 @@ variable "eks_lb_url" {
 
 # 2. Busca a Lambda de Autenticação criada pelo Repo 1
 data "aws_lambda_function" "auth_lambda" {
-  # Coloque aqui o nome exato da função que o AWS SAM vai gerar
-  function_name = "NOME_DA_SUA_LAMBDA_NO_AWS" 
+  function_name = "oficina-auth-stack-AuthFunction-tehjPDXSbk5y" 
 }
 
 # 3. Cria o API Gateway (HTTP API)
