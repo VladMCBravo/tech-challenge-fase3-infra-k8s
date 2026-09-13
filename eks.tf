@@ -2,7 +2,7 @@ data "aws_caller_identity" "current" {}
 
 # 1. Cluster EKS Nativo
 resource "aws_eks_cluster" "oficina_cluster" {
-  name     = "oficina-eks-cluster"
+  name     = "oficina-eks-cluster-v2"
   role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/LabRole"
   
 
