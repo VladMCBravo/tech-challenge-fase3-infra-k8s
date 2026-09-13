@@ -45,7 +45,7 @@ resource "aws_lambda_permission" "api_gw" {
 resource "aws_apigatewayv2_integration" "eks_integration" {
   api_id             = aws_apigatewayv2_api.oficina_api.id
   integration_type   = "HTTP_PROXY"
-  integration_uri    = "${var.eks_lb_url}/{proxy}"
+  integration_uri    = "http://a0b6f753bd37b43969ae65bb02b3ce00-1235088358.us-east-1.elb.amazonaws.com/{proxy}"
   integration_method = "ANY"
 }
 
