@@ -1,10 +1,10 @@
 data "aws_caller_identity" "current" {}
 
-# 1. Cluster EKS Nativo (Ignora o módulo oficial que causa o erro 403)
+# 1. Cluster EKS Nativo
 resource "aws_eks_cluster" "oficina_cluster" {
   name     = "oficina-eks-cluster"
   role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/LabRole"
-  version  = "1.30"
+  version  = "1.29" # <-- Downgrade para versão suportada pelo Academy
 
   vpc_config {
     subnet_ids             = module.vpc.private_subnets
@@ -12,7 +12,7 @@ resource "aws_eks_cluster" "oficina_cluster" {
   }
 }
 
-# 2. Grupo de Nós (As máquinas virtuais EC2 que rodam os pods)
+# 2. Grupo de Nós (As máquinas virtuais EC2)
 resource "aws_eks_node_group" "oficina_nodes" {
   cluster_name    = aws_eks_cluster.oficina_cluster.name
   node_group_name = "oficina-node-group"
@@ -20,6 +20,7 @@ resource "aws_eks_node_group" "oficina_nodes" {
   subnet_ids      = module.vpc.private_subnets
 
   instance_types = ["t3.medium"]
+  ami_type       = "AL2_x86_64" # <-- Garantindo compatibilidade da imagem
 
   scaling_config {
     desired_size = 1
@@ -27,7 +28,6 @@ resource "aws_eks_node_group" "oficina_nodes" {
     min_size     = 1
   }
 
-  # Diz ao Terraform para só criar as máquinas DEPOIS que o cluster estiver pronto
   depends_on = [
     aws_eks_cluster.oficina_cluster
   ]

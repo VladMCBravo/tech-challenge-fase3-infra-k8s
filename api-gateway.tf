@@ -1,10 +1,10 @@
 # api-gateway.tf
 
-# 1. Variável para receber a URL do Load Balancer do EKS (que será gerado pelo Repo 4)
+# 1. Variável para receber a URL do Load Balancer do EKS
 variable "eks_lb_url" {
   description = "URL do Load Balancer gerado pelo Kubernetes"
   type        = string
-  default     = "http://localhost" # Valor provisório. Depois você troca pela URL real do EKS
+  default     = "http://example.com" # <-- Alterado de localhost para passar na validação
 }
 
 # 2. Busca a Lambda de Autenticação criada pelo Repo 1
