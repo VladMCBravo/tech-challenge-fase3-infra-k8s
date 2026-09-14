@@ -5,9 +5,25 @@ resource "aws_eks_cluster" "oficina_cluster" {
   name     = "oficina-eks-cluster-v2"
   role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/LabRole"
 
+  # Casa com o cluster JÁ existente (importado). O default do provider é `true`,
+  # e a diferença false->true FORÇA a recriação do cluster. Fixamos em false.
+  bootstrap_self_managed_addons = false
+
   vpc_config {
     subnet_ids             = data.aws_subnets.private_subnets.ids
     endpoint_public_access = true
+  }
+
+  # SEGURANÇA: nunca destruir o cluster por drift/replace inesperado, e ignorar
+  # atributos gerenciados pela AWS (evitam plano querendo recriar/alterar internamente).
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes = [
+      bootstrap_self_managed_addons,
+      access_config,
+      kubernetes_network_config,
+      upgrade_policy,
+    ]
   }
 }
 
@@ -29,4 +45,13 @@ resource "aws_eks_node_group" "oficina_nodes" {
   depends_on = [
     aws_eks_cluster.oficina_cluster
   ]
+
+  # SEGURANÇA: não destruir os nós por replace inesperado; desired_size pode
+  # variar (escala), então ignoramos essa diferença.
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes = [
+      scaling_config[0].desired_size,
+    ]
+  }
 }
