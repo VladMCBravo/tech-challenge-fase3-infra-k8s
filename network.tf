@@ -1,26 +1,27 @@
-module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "5.0.0"
+# network.tf — Rede REFERENCIADA (não criada).
+#
+# Antes este repo criava a VPC via módulo `terraform-aws-modules/vpc`.
+# Agora ele REFERENCIA a VPC e as subnets privadas já existentes por ID,
+# exatamente como o `infra-db` faz (ver data.tf do infra-db).
+#
+# Por quê: a VPC já existe (foi criada num apply anterior). Recriá-la a cada
+# execução do pipeline causaria duplicidade de rede e poderia forçar mudança
+# nas subnets do cluster EKS já provisionado. Referenciando por ID, o `apply`
+# fica idempotente e não toca na rede nem no cluster.
+#
+# NOTA: os IDs abaixo são os MESMOS usados pelo infra-db (VPC onde EKS/RDS vivem
+# e as 2 subnets privadas). Se algum dia a rede for recriada, atualize os IDs.
 
-  name = "oficina-vpc"
-  cidr = "10.0.0.0/16"
+data "aws_vpc" "oficina_vpc" {
+  id = "vpc-04819097f65faf999"
+}
 
-  azs             = ["${var.region}a", "${var.region}b"]
-  private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
-  public_subnets  = ["10.0.101.0/24", "10.0.102.0/24"]
-
-  enable_nat_gateway = true
-  single_nat_gateway = true
-
-  tags = {
-    Environment = "tech-challenge"
-    Project     = "oficina-mecanica"
-  }
- 
-  # --- O QUE FOI ADICIONADO ---
-  # Isso vai colocar uma etiqueta "Tier = Private" nas subnets privadas
-  # para o Repo 3 conseguir achá-las depois.
-  private_subnet_tags = {
-    Tier = "Private"
+data "aws_subnets" "private_subnets" {
+  filter {
+    name = "subnet-id"
+    values = [
+      "subnet-0b868a33706dd184a",
+      "subnet-0e66981f57714d07c",
+    ]
   }
 }

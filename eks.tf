@@ -1,23 +1,22 @@
 data "aws_caller_identity" "current" {}
 
-# 1. Cluster EKS Nativo
+# 1. Cluster EKS — usa as subnets privadas REFERENCIADAS (data source em network.tf).
 resource "aws_eks_cluster" "oficina_cluster" {
   name     = "oficina-eks-cluster-v2"
   role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/LabRole"
-  
 
   vpc_config {
-    subnet_ids             = module.vpc.private_subnets
+    subnet_ids             = data.aws_subnets.private_subnets.ids
     endpoint_public_access = true
   }
 }
 
-# 2. Grupo de Nós (As máquinas virtuais EC2)
+# 2. Grupo de Nós (EC2) — mesmas subnets privadas referenciadas.
 resource "aws_eks_node_group" "oficina_nodes" {
   cluster_name    = aws_eks_cluster.oficina_cluster.name
   node_group_name = "oficina-node-group"
   node_role_arn   = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/LabRole"
-  subnet_ids      = module.vpc.private_subnets
+  subnet_ids      = data.aws_subnets.private_subnets.ids
 
   instance_types = ["t3.medium"]
 
